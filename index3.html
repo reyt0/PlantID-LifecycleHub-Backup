@@ -852,20 +852,37 @@
       dictationRecognition.interimResults = false;
       dictationRecognition.maxAlternatives = 1;
 
+      let voiceTranscript = '';
+
       dictationRecognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        input.value = transcript;
+        voiceTranscript = event.results[0][0].transcript;
+        input.value = voiceTranscript;
         dictationIsVoice = true;
       };
 
       dictationRecognition.onend = () => {
         micBtn.classList.remove('bg-rose-100', 'text-rose-600');
         micBtn.innerHTML = '<i class="fa-solid fa-microphone"></i>';
+        if (voiceTranscript) {
+          voiceTranscript = '';
+          submitDictation();
+        }
       };
 
-      dictationRecognition.onerror = () => {
+      dictationRecognition.onerror = (event) => {
         micBtn.classList.remove('bg-rose-100', 'text-rose-600');
         micBtn.innerHTML = '<i class="fa-solid fa-microphone"></i>';
+        voiceTranscript = '';
+        const feedbackBox = document.getElementById('dictationFeedback');
+        if (feedbackBox) {
+          feedbackBox.classList.remove('hidden');
+          feedbackBox.className = 'p-3 bg-rose-50 rounded-2xl border border-rose-200 text-xs text-rose-700';
+          const reason = event.error === 'not-allowed' ? '麥克風權限被拒絕，請允許瀏覽器使用麥克風'
+            : event.error === 'no-speech' ? '沒有偵測到語音，請再試一次'
+            : event.error === 'network' ? '網路連線中斷，請確認網路後重試'
+            : `語音辨識失敗 (${event.error || '未知錯誤'})`;
+          feedbackBox.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1.5"></i>${reason}`;
+        }
       };
 
       micBtn.onclick = () => {
